@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package cz.adamh.utils;
+package com.nativeutils;
 
 import java.io.File;
 import java.io.FileNotFoundException;

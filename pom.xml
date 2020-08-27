@@ -2,11 +2,18 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.native.utils</groupId>
+
+    <groupId>com.github.ramanrajarathinam</groupId>
     <artifactId>native-utils</artifactId>
     <version>0.0.1</version>
+
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>
+        A simple library class which helps with loading dynamic libraries stored in the JAR archive. These
+        libraries usualy contain implementation of some methods in native code (using JNI - Java Native Interface).
+    </description>
+    <url>https://github.com/RamanRajarathinam/native-utils</url>
 
     <licenses>
         <license>
@@ -16,6 +23,28 @@
         </license>
     </licenses>
 
+    <developers>
+        <developer>
+            <name>Raman Rajarathinam</name>
+            <email>ramanrajarathinam@gmail.com</email>
+            <organization>Github</organization>
+            <organizationUrl>https://github.com/RamanRajarathinam</organizationUrl>
+        </developer>
+        <developer>
+            <name>Adam Heinrich</name>
+            <email>adam@adamh.cz</email>
+            <organization>Github</organization>
+            <organizationUrl>https://www.adamh.cz</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/RamanRajarathinam/native-utils.git</connection>
+        <developerConnection>scm:git:ssh://github.com/RamanRajarathinam/native-utils.git</developerConnection>
+        <url>https://github.com/RamanRajarathinam/native-utils</url>
+        <tag>v1.0.0</tag>
+    </scm>
+
     <distributionManagement>
         <snapshotRepository>
             <id>ossrh</id>
@@ -23,39 +52,79 @@
         </snapshotRepository>
         <repository>
             <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/
-            </url>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
     </distributionManagement>
 
-    <scm>
-        <url>https://github.com/adamheinrich/native-utils</url>
-    </scm>
-
     <build>
-        <defaultGoal>clean install</defaultGoal>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.3.2</version>
+                <version>3.1</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
             <plugin>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <version>2.8.2</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.21.0</version>
+                <configuration>
+                    <skipTests>true</skipTests>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.0.0</version>
                 <executions>
                     <execution>
-                        <id>default-deploy</id>
-                        <phase>deploy</phase>
+                        <id>attach-javadocs</id>
                         <goals>
-                            <goal>deploy</goal>
+                            <goal>jar</goal>
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.8</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                </configuration>
             </plugin>
         </plugins>
     </build>
