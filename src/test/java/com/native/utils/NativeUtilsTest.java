@@ -9,21 +9,21 @@ public class NativeUtilsTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testLoadLibraryIllegalPath() throws IOException {
-        NativeUtils.loadLibraryFromJar("libtest.so");
+        cz.adamh.utils.NativeUtils.loadLibraryFromJar("libtest.so");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testLoadLibraryIllegalPrefix() throws IOException {
-        NativeUtils.loadLibraryFromJar("/l");
+        cz.adamh.utils.NativeUtils.loadLibraryFromJar("/l");
     }
 
     @Test(expected = FileNotFoundException.class)
     public void testLoadLibraryNonExistentPath() throws IOException {
-        NativeUtils.loadLibraryFromJar("/libtest.so");
+        cz.adamh.utils.NativeUtils.loadLibraryFromJar("/libtest.so");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testLoadLibraryNullPath() throws IOException {
-        NativeUtils.loadLibraryFromJar(null);
+        cz.adamh.utils.NativeUtils.loadLibraryFromJar(null);
     }
 }
