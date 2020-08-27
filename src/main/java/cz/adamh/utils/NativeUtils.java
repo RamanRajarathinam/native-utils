@@ -23,26 +23,26 @@
  */
 package cz.adamh.utils;
 
-import java.io.*;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.ProviderNotFoundException;
-import java.nio.file.StandardCopyOption;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.*;
+import java.util.logging.Logger;
 
 /**
- * A simple library class which helps with loading dynamic libraries stored in the
- * JAR archive. These libraries usually contain implementation of some methods in
- * native code (using JNI - Java Native Interface).
- * 
+ * A simple library class which helps with loading dynamic libraries stored in the JAR archive.
+ * These libraries usually contain implementation of some methods in native code (using JNI - Java
+ * Native Interface).
+ *
  * @see <a href="http://adamheinrich.com/blog/2012/how-to-load-native-jni-library-from-jar">http://adamheinrich.com/blog/2012/how-to-load-native-jni-library-from-jar</a>
  * @see <a href="https://github.com/adamheinrich/native-utils">https://github.com/adamheinrich/native-utils</a>
- *
  */
 public class NativeUtils {
- 
+    private static final Logger LOGGER = Logger.getLogger(NativeUtils.class.getName());
     /**
-     * The minimum length a prefix for a file has to have according to {@link File#createTempFile(String, String)}}.
+     * The minimum length a prefix for a file has to have according to {@link
+     * File#createTempFile(String, String)}}.
      */
     private static final int MIN_PREFIX_LENGTH = 3;
     public static final String NATIVE_FOLDER_PATH_PREFIX = "nativeutils";
@@ -60,59 +60,68 @@ public class NativeUtils {
 
     /**
      * Loads library from current JAR archive
-     * 
-     * The file from JAR is copied into system temporary directory and then loaded. The temporary file is deleted after
-     * exiting.
-     * Method uses String as filename because the pathname is "abstract", not system-dependent.
-     * 
-     * @param path The path of file inside JAR as absolute path (beginning with '/'), e.g. /package/File.ext
-     * @throws IOException If temporary file creation or read/write operation fails
+     * <p>
+     * The file from JAR is copied into system temporary directory and then loaded. The temporary file
+     * is deleted after exiting. Method uses String as filename because the pathname is "abstract",
+     * not system-dependent.
+     *
+     * @param path The path of file inside JAR as absolute path (beginning with '/'), e.g.
+     *             /package/File.ext
+     * @throws IOException              If temporary file creation or read/write operation fails
      * @throws IllegalArgumentException If source file (param path) does not exist
-     * @throws IllegalArgumentException If the path is not absolute or if the filename is shorter than three characters
-     * (restriction of {@link File#createTempFile(java.lang.String, java.lang.String)}).
-     * @throws FileNotFoundException If the file could not be found inside the JAR.
+     * @throws IllegalArgumentException If the path is not absolute or if the filename is shorter than
+     *                                  three characters (restriction of {@link File#createTempFile(String,
+     *                                  String)}).
+     * @throws FileNotFoundException    If the file could not be found inside the JAR.
      */
     public static void loadLibraryFromJar(String path) throws IOException {
- 
-        if (null == path || !path.startsWith("/")) {
+        if (path == null || !path.startsWith("/")) {
             throw new IllegalArgumentException("The path has to be absolute (start with '/').");
         }
- 
-        // Obtain filename from path
-        String[] parts = path.split("/");
-        String filename = (parts.length > 1) ? parts[parts.length - 1] : null;
- 
-        // Check if the filename is okay
+
+        /* Obtain filename from path */
+        final String[] parts = path.split("/");
+        final String filename = (parts.length > 1) ? parts[parts.length - 1] : null;
+
+        /* Check if the filename is okay */
         if (filename == null || filename.length() < MIN_PREFIX_LENGTH) {
             throw new IllegalArgumentException("The filename has to be at least 3 characters long.");
         }
- 
-        // Prepare temporary file
+
+        /* Prepare temporary file */
         if (temporaryDir == null) {
-            temporaryDir = createTempDirectory(NATIVE_FOLDER_PATH_PREFIX);
+            temporaryDir = createTempDirectory();
             temporaryDir.deleteOnExit();
         }
-
-        File temp = new File(temporaryDir, filename);
-
-        try (InputStream is = NativeUtils.class.getResourceAsStream(path)) {
+        final File temp = new File(temporaryDir, filename);
+        try (final InputStream is = NativeUtils.class.getResourceAsStream(path)) {
             Files.copy(is, temp.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            temp.delete();
+            final boolean status = temp.delete();
+            if (status) {
+                LOGGER.info("Deleted file : " + temp.getAbsolutePath());
+            }
             throw e;
         } catch (NullPointerException e) {
-            temp.delete();
+            final boolean status = temp.delete();
+            if (status) {
+                LOGGER.info("Deleted file : " + temp.getAbsolutePath());
+            }
             throw new FileNotFoundException("File " + path + " was not found inside JAR.");
         }
 
+        /* load file */
         try {
             System.load(temp.getAbsolutePath());
         } finally {
             if (isPosixCompliant()) {
-                // Assume POSIX compliant file system, can be deleted after loading
-                temp.delete();
+                /* Assume POSIX compliant file system, can be deleted after loading */
+                final boolean status = temp.delete();
+                if (status) {
+                    LOGGER.info("Deleted file : " + temp.getAbsolutePath());
+                }
             } else {
-                // Assume non-POSIX, and don't delete until last file descriptor closed
+                /* Assume non-POSIX, and don't delete until last file descriptor closed */
                 temp.deleteOnExit();
             }
         }
@@ -120,9 +129,7 @@ public class NativeUtils {
 
     private static boolean isPosixCompliant() {
         try {
-            return FileSystems.getDefault()
-                    .supportedFileAttributeViews()
-                    .contains("posix");
+            return FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
         } catch (FileSystemNotFoundException
                 | ProviderNotFoundException
                 | SecurityException e) {
@@ -130,13 +137,12 @@ public class NativeUtils {
         }
     }
 
-    private static File createTempDirectory(String prefix) throws IOException {
-        String tempDir = System.getProperty("java.io.tmpdir");
-        File generatedDir = new File(tempDir, prefix + System.nanoTime());
-        
-        if (!generatedDir.mkdir())
+    private static File createTempDirectory() throws IOException {
+        final String tempDir = System.getProperty("java.io.tmpdir");
+        final File generatedDir = new File(tempDir, NATIVE_FOLDER_PATH_PREFIX + System.nanoTime());
+        if (!generatedDir.mkdir()) {
             throw new IOException("Failed to create temp directory " + generatedDir.getName());
-        
+        }
         return generatedDir;
     }
 }
